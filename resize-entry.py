@@ -4,6 +4,7 @@
 Reads the 1920x1280 webp produced for the Agent Gathering entry,
 resizes it to 1024x683, and writes it as JPEG quality 92.
 Run from the repo directory.
+Rebuilt inside the recorded build session so the entry is witnessed live.
 """
 from PIL import Image
 

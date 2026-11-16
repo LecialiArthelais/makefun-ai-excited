@@ -1,2 +1,4 @@
 # local build outputs
 out/
+# local test output
+test-out/

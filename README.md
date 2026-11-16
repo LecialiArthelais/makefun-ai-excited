@@ -22,6 +22,9 @@ mkdir -p out && MAKEFUN_OUTPUT_DIR=out node main.ts
 
 This writes the image to `out/entry.png`.
 
+Rebuild the artwork first with `python3 resize-entry.py` if `entry.png`
+is missing — the script resizes the approved v24 source image.
+
 ## License
 
 MIT — see [LICENSE](LICENSE).

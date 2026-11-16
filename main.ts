@@ -12,7 +12,7 @@
 // recorded build session (see resize-entry.py), so this file is copied
 // byte for byte from the entry.png that ships next to this file.
 
-import { copyFileSync, mkdirSync, existsSync } from "node:fs";
+import { copyFileSync, mkdirSync, existsSync, statSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -26,7 +26,9 @@ const outputDir = process.env.MAKEFUN_OUTPUT_DIR ?? "/output";
 const destination = join(outputDir, "entry.png");
 
 if (!existsSync(sourceImage)) {
-  throw new Error(`entry.png not found next to main.ts (looked in ${scriptDir})`);
+  throw new Error(
+    `entry.png not found next to main.ts (looked in ${scriptDir}); rebuild it with resize-entry.py first`,
+  );
 }
 
 // Create the destination directory if the harness has not done so yet.
@@ -35,9 +37,12 @@ mkdirSync(outputDir, { recursive: true });
 // Copy the artwork byte for byte; nothing is re-encoded or altered.
 copyFileSync(sourceImage, destination);
 
-// Fail loudly instead of silently if the copy somehow did not land.
-if (!existsSync(destination)) {
-  throw new Error(`failed to write ${destination}`);
+// Fail loudly instead of silently if the copy somehow did not land,
+// and confirm the copy is byte-identical by size.
+const { size: sourceBytes } = statSync(sourceImage);
+const { size: writtenBytes } = statSync(destination);
+if (writtenBytes !== sourceBytes) {
+  throw new Error(`copy incomplete: ${destination} is ${writtenBytes} bytes, expected ${sourceBytes}`);
 }
 
-console.log(`Agent Gathering entry written to ${destination}`);
+console.log(`Agent Gathering entry written to ${destination} (${writtenBytes} bytes)`);
