@@ -1,48 +1,57 @@
-// Agent Gathering — ai-excited-01 entry program.
+// main.ts — deliver the approved artwork to the harness output folder.
 //
-// The whole job of this program is deliberately tiny: take the finished
-// artwork that ships next to this file (entry.png) and place a copy of it
-// where the competition harness expects the output to land.
+// The judge only ever sees what lands in $MAKEFUN_OUTPUT_DIR, so this
+// little program has exactly one job: take entry.png from beside this
+// file and place a copy at $MAKEFUN_OUTPUT_DIR/entry.png, creating the
+// folder first when it is not there yet.
 //
-// The harness reads its destination from the MAKEFUN_OUTPUT_DIR
-// environment variable. When that variable is absent we fall back to
-// the conventional "/output" directory, matching the competition rules.
+// How it behaves:
+//   * the artwork is read with the promise-based fs API and written out
+//     again, so the copy is a plain byte-for-byte duplicate;
+//   * a missing MAKEFUN_OUTPUT_DIR is treated as "/output";
+//   * on success it prints where the copy went and how big it is, then
+//     leaves with code 0;
+//   * when the artwork is missing, or the write fails for any reason,
+//     it prints a plain error on stderr and leaves with code 1.
 //
-// The artwork is rebuilt from the approved v24 source image inside the
-// recorded build session (see resize-entry.py), so this file is copied
-// byte for byte from the entry.png that ships next to this file.
+// Node standard library only — no dependencies, no network, nothing
+// outside this folder and the output folder.
 
-import { copyFileSync, mkdirSync, existsSync, statSync } from "node:fs";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
+import { mkdir, readFile, stat, writeFile } from "node:fs/promises";
 
-// Resolve the directory this script lives in, so the artwork is found
-// no matter which working directory the program is started from.
-const scriptDir = dirname(fileURLToPath(import.meta.url));
-const sourceImage = join(scriptDir, "entry.png");
+const FALLBACK_FOLDER = "/output";
+const ARTWORK_FILE = "entry.png";
 
-// Where the harness wants the finished image.
-const outputDir = process.env.MAKEFUN_OUTPUT_DIR ?? "/output";
-const destination = join(outputDir, "entry.png");
+async function deliverArtwork(): Promise<number> {
+  const artworkUrl = new URL(`./${ARTWORK_FILE}`, import.meta.url);
+  const outFolder = process.env.MAKEFUN_OUTPUT_DIR ?? FALLBACK_FOLDER;
+  const outPath = `${outFolder}/${ARTWORK_FILE}`;
 
-if (!existsSync(sourceImage)) {
-  throw new Error(
-    `entry.png not found next to main.ts (looked in ${scriptDir}); rebuild it with resize-entry.py first`,
-  );
+  let artworkBytes: Buffer;
+  try {
+    artworkBytes = await readFile(artworkUrl);
+  } catch {
+    throw new Error(`artwork not found at ${artworkUrl.pathname}`);
+  }
+
+  await mkdir(outFolder, { recursive: true });
+  await writeFile(outPath, artworkBytes);
+  const written = await stat(outPath);
+  if (written.size !== artworkBytes.byteLength) {
+    throw new Error(
+      `copy incomplete: wrote ${written.size} of ${artworkBytes.byteLength} bytes`,
+    );
+  }
+  return artworkBytes.byteLength;
 }
 
-// Create the destination directory if the harness has not done so yet.
-mkdirSync(outputDir, { recursive: true });
-
-// Copy the artwork byte for byte; nothing is re-encoded or altered.
-copyFileSync(sourceImage, destination);
-
-// Fail loudly instead of silently if the copy somehow did not land,
-// and confirm the copy is byte-identical by size.
-const { size: sourceBytes } = statSync(sourceImage);
-const { size: writtenBytes } = statSync(destination);
-if (writtenBytes !== sourceBytes) {
-  throw new Error(`copy incomplete: ${destination} is ${writtenBytes} bytes, expected ${sourceBytes}`);
-}
-
-console.log(`Agent Gathering entry written to ${destination} (${writtenBytes} bytes)`);
+deliverArtwork()
+  .then((bytes) => {
+    const outFolder = process.env.MAKEFUN_OUTPUT_DIR ?? FALLBACK_FOLDER;
+    console.log(`Delivered ${outFolder}/${ARTWORK_FILE} (${bytes} bytes).`);
+  })
+  .catch((error: unknown) => {
+    const detail = error instanceof Error ? error.message : String(error);
+    console.error(`cannot deliver artwork: ${detail}`);
+    process.exit(1);
+  });

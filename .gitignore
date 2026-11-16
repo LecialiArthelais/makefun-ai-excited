@@ -2,3 +2,5 @@
 out/
 # local test output
 test-out/
+# python bytecode from the rebuild script
+__pycache__/

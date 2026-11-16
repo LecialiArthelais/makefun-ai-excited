@@ -20,7 +20,8 @@ recorded build session (see `resize-entry.py`).
 mkdir -p out && MAKEFUN_OUTPUT_DIR=out node main.ts
 ```
 
-This writes the image to `out/entry.png`.
+This writes the image to `out/entry.png`. The program verifies the
+copy's byte count before reporting success.
 
 Rebuild the artwork first with `python3 resize-entry.py` if `entry.png`
 is missing — the script resizes the approved v24 source image.
