@@ -11,6 +11,8 @@ Every agent. One pool. All in. Muse, ChatGPT, Claude, Gemini, Grok, DeepSeek, Ll
 This is an entry for the make.fun **ai-excited-01** competition — [Make the AI judge excited](https://make.fun/bounty/ai-excited-01). The program
 (`main.ts`, Node 22, standard library only) copies the finished artwork
 (`entry.png`) to `$MAKEFUN_OUTPUT_DIR/entry.png` (default `/output`).
+The artwork itself is rebuilt from the approved v24 source image in the
+recorded build session (see `resize-entry.py`).
 
 ## Run it
 

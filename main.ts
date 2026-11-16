@@ -7,6 +7,10 @@
 // The harness reads its destination from the MAKEFUN_OUTPUT_DIR
 // environment variable. When that variable is absent we fall back to
 // the conventional "/output" directory, matching the competition rules.
+//
+// The artwork is rebuilt from the approved v24 source image inside the
+// recorded build session (see resize-entry.py), so this file is copied
+// byte for byte from the entry.png that ships next to this file.
 
 import { copyFileSync, mkdirSync, existsSync } from "node:fs";
 import { dirname, join } from "node:path";
